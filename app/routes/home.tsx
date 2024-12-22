@@ -1,5 +1,6 @@
 import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
+import prisma from "~/db.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -8,7 +9,12 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export function loader({ context }: Route.LoaderArgs) {
+export async function loader({ context }: Route.LoaderArgs) {
+  const newUser = await prisma.user.create({
+    data: {},
+  });
+
+  console.log(newUser);
   return { message: context.VALUE_FROM_VERCEL };
 }
 
