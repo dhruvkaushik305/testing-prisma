@@ -20,14 +20,14 @@ export default defineConfig(({ isSsrBuild, command }) => ({
   ssr: {
     noExternal: command === "build" ? true : undefined,
   },
-  plugins: [reactRouter(), tsconfigPaths(),{
+  plugins: [{
     name: "prisma:rebase",
     enforce: "pre",
     transform(code, id) {
       if (id.includes("@prisma/client")) {
         return code.replaceAll(
-          /require\((['"])\.prisma\/client/g,
-          "require($1../../.prisma/client",
+          /require\((['"])\.prisma\/client\/default/g,
+          "require($1../../.prisma/client/index"
         );
       }
     },
@@ -39,5 +39,5 @@ export default defineConfig(({ isSsrBuild, command }) => ({
         return code.replaceAll("__dirname", "import.meta.dirname");
       }
     },
-  },],
+  },reactRouter(), tsconfigPaths(),],
 }));
