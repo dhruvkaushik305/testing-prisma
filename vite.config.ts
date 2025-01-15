@@ -5,6 +5,7 @@ import fs from "fs";
 import tailwindcss from "tailwindcss";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { glob } from "glob";
 
 export default defineConfig(({ isSsrBuild, command }) => ({
   build: {
@@ -40,27 +41,25 @@ export default defineConfig(({ isSsrBuild, command }) => ({
         }
       },
       buildEnd() {
-        // Define source and destination paths
-        const queryEngineBinaryName =
-          "libquery_engine-rhel-openssl-3.0.x.so.node";
-        const sourcePath = path.resolve(
-          "node_modules",
-          "@prisma/client-generated",
-          queryEngineBinaryName
-        );
-        const destinationPath = path.resolve("dist", queryEngineBinaryName);
+        const clientDir = path.resolve("node_modules/@prisma/client");
+        const distDir = path.resolve("dist");
 
-        // Ensure the binary is copied to the output directory
-        if (fs.existsSync(sourcePath)) {
-          fs.copyFileSync(sourcePath, destinationPath);
-          console.log(
-            `Copied Prisma Query Engine binary to ${destinationPath}`
-          );
-        } else {
+        const binaries = glob.sync("libquery_engine-*.node", {
+          cwd: clientDir,
+        });
+        if (binaries.length === 0) {
           console.error(
-            `Prisma Query Engine binary not found at ${sourcePath}. Please ensure it's correctly generated.`
+            `No Prisma Query Engine binaries found in ${clientDir}`
           );
+          return;
         }
+
+        const binaryName = binaries[0];
+        const sourcePath = path.join(clientDir, binaryName);
+        const destinationPath = path.join(distDir, binaryName);
+
+        fs.copyFileSync(sourcePath, destinationPath);
+        console.log(`Copied Prisma Query Engine binary to ${destinationPath}`);
       },
     },
     reactRouter(),
