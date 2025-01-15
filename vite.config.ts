@@ -20,24 +20,25 @@ export default defineConfig(({ isSsrBuild, command }) => ({
   ssr: {
     noExternal: command === "build" ? true : undefined,
   },
-  plugins: [{
-    name: "prisma:rebase",
-    enforce: "pre",
-    transform(code, id) {
-      if (id.includes("@prisma/client")) {
-        return code.replaceAll(
-          /require\((['"])\.prisma\/client\/default/g,
-          "require($1../../.prisma/client/index"
-        );
-      }
+  plugins: [
+    {
+      name: "prisma:build",
+      apply: "build",
+      config() {
+        return {
+          define: {
+            __dirname: "import.meta.dirname",
+            __filename: "import.meta.filename",
+          },
+        };
+      },
+      transform(code, id) {
+        if (id.includes("@prisma/client-generated")) {
+          return code.replace('eval("__dirname")', "import.meta.dirname");
+        }
+      },
     },
-  },
-  {
-    name: "prisma:dirname",
-    transform(code, id) {
-      if (id.includes("@prisma/client") || id.includes(".prisma/client")) {
-        return code.replaceAll("__dirname", "import.meta.dirname");
-      }
-    },
-  },reactRouter(), tsconfigPaths(),],
+    reactRouter(),
+    tsconfigPaths(),
+  ],
 }));

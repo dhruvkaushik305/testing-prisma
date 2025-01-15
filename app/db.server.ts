@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
+// import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client-generated";
 let prisma: PrismaClient;
 
 declare global {
