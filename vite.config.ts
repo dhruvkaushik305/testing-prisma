@@ -1,7 +1,7 @@
 import { reactRouter } from "@react-router/dev/vite";
 import autoprefixer from "autoprefixer";
-import { copyFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
+import path from "path";
+import fs from "fs";
 import tailwindcss from "tailwindcss";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -39,39 +39,27 @@ export default defineConfig(({ isSsrBuild, command }) => ({
           return code.replace('eval("__dirname")', "import.meta.dirname");
         }
       },
-      closeBundle() {
-        // Target directory is now based on the Vercel functions path
-        const targetDir = join(
-          process.cwd(),
-          ".vercel/output/functions/index.func"
+      buildEnd() {
+        // Define source and destination paths
+        const queryEngineBinaryName =
+          "libquery_engine-rhel-openssl-3.0.x.so.node";
+        const sourcePath = path.resolve(
+          "node_modules",
+          "@prisma/client-generated",
+          queryEngineBinaryName
         );
-        if (!existsSync(targetDir)) {
-          mkdirSync(targetDir, { recursive: true });
-        }
+        const destinationPath = path.resolve("dist", queryEngineBinaryName);
 
-        try {
-          const enginePath = join(
-            process.cwd(),
-            "node_modules/@prisma/client-generated/libquery_engine-rhel-openssl-3.0.x.so.node"
+        // Ensure the binary is copied to the output directory
+        if (fs.existsSync(sourcePath)) {
+          fs.copyFileSync(sourcePath, destinationPath);
+          console.log(
+            `Copied Prisma Query Engine binary to ${destinationPath}`
           );
-          const targetPath = join(
-            targetDir,
-            "libquery_engine-rhel-openssl-3.0.x.so.node"
+        } else {
+          console.error(
+            `Prisma Query Engine binary not found at ${sourcePath}. Please ensure it's correctly generated.`
           );
-
-          if (existsSync(enginePath)) {
-            copyFileSync(enginePath, targetPath);
-            console.log(
-              "✓ Successfully copied Prisma query engine to .vercel/output/functions/index.func"
-            );
-          } else {
-            console.warn(
-              "⚠️ Could not find Prisma query engine at expected path:",
-              enginePath
-            );
-          }
-        } catch (error) {
-          console.error("Error copying Prisma query engine:", error);
         }
       },
     },
